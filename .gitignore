@@ -1,0 +1,79 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+.pnpm-store/
+
+# Testing
+/coverage
+.nyc_output
+
+# Next.js
+/.next/
+/out/
+next-env.d.ts
+.next
+.turbo
+
+# Production
+/build
+/dist
+
+# Development
+*.bak
+*.swp
+*.log
+.DS_Store
+*.pem
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env
+.env.*
+!.env.example
+
+# Debug logs 
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# IDE and Editor files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.aider*
+
+# Cache directories
+.cache/
+.temp/
+.vercel
+.npm
+
+# TypeScript
+*.tsbuildinfo
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Misc
+*.bak
+.history/
+.temp/
+tmp/
+temp/
+
+# Database
+/prisma/db.sqlite
+/prisma/db.sqlite-journal
+db.sqlite
+
+# Public assets that should be regenerated
+/public/sitemap.xml
+/public/robots.txt
