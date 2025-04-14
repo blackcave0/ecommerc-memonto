@@ -4,15 +4,19 @@ import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-export function LoadingOverlay() {
-  const { isLoading } = useAuth();
+interface LoadingOverlayProps {
+  isLoading: boolean;
+}
+
+export function LoadingOverlay({isLoading}: LoadingOverlayProps) {
+  // const { isLoading } = useAuth();
   const [showLoader, setShowLoader] = useState(false);
   const pathname = usePathname();
 
   // Only show the loader if loading takes more than 300ms
   // This prevents flashing for quick operations
   useEffect(() => {
-    let timeout: NodeJS.Timeout;
+    let timeout: ReturnType<typeof setTimeout>;
 
     if (isLoading) {
       timeout = setTimeout(() => {
@@ -29,7 +33,7 @@ export function LoadingOverlay() {
 
   // Don't show the loader on certain pages that handle their own loading states
   // or during logout operations
-  if (pathname === '/login' || pathname === '/signup' || pathname === '/') {
+  if (pathname === '/login' || pathname === '/signup' || pathname === '/' ) { 
     return null;
   }
 
