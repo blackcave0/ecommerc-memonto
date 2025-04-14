@@ -24,8 +24,7 @@ export default function RootLayout({
         <AuthProvider>
           <AdminProvider>
             <CartProvider>
-              <LoadingOverlay />
-              {children}
+              <LoadingOverlay isLoading={false} /> {children}
             </CartProvider>
           </AdminProvider>
         </AuthProvider>
