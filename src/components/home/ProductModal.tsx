@@ -353,15 +353,15 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                 <div className="flex gap-4 mt-auto">
                   <div className="flex gap-4 mt-auto">
                     <button
-                      className="flex-1 bg-black text-white py-3 rounded-md hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                      className="flex px-6  bg-black text-white py-3 rounded-md hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                       onClick={handleAddToCart}
                     >
                       <ShoppingCart className="w-4 h-4" />
                       Add to Cart
                     </button>
-                    <Link href={`/product/${product.id}`} className="flex-1">
+                    <Link href={`/product/${product.id}`} className="flex ">
                       <button
-                        className="w-full bg-gray-100 text-black py-3 rounded-md hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                        className="w-full bg-gray-100 text-black px-6 py-3 rounded-md hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
                       >
                         View Details
                       </button>

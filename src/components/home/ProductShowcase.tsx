@@ -145,22 +145,10 @@ export function ProductShowcase() {
 
   const currentProduct = products[currentIndex];
 
-  const variants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 1000 : -1000,
-      opacity: 0,
-      scale: 0.95
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      scale: 1
-    },
-    exit: (direction: number) => ({
-      x: direction < 0 ? 1000 : -1000,
-      opacity: 0,
-      scale: 0.95
-    })
+  const fadeInVariants = {
+    initial: { opacity: 0 },
+    animate: { opacity: 1, transition: { duration: 0.5 } },
+    exit: { opacity: 0, transition: { duration: 0.5 } }
   };
 
   const swipeConfidenceThreshold = 10000;
@@ -181,127 +169,71 @@ export function ProductShowcase() {
       <div className="absolute top-4 left-4 z-10 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs tracking-wider">
         {currentIndex + 1}/{products.length}
       </div>
-      
+
       <AnimatePresence initial={false} custom={direction} mode="popLayout">
         <motion.div
           key={currentProduct.id}
-          custom={direction}
-          variants={variants}
-          initial="enter"
-          animate="center"
+          variants={fadeInVariants}
+          initial="initial"
+          animate="animate"
           exit="exit"
-          transition={{
-            x: { type: "spring", stiffness: 300, damping: 30 },
-            opacity: { duration: 0.2 }
-          }}
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={1}
-          onDragStart={() => setDragging(true)}
-          onDragEnd={(e, { offset, velocity }) => {
-            setDragging(false);
-            const swipe = swipePower(offset.x, velocity.x);
-            
-            if (swipe < -swipeConfidenceThreshold) {
-              paginate(1);
-            } else if (swipe > swipeConfidenceThreshold) {
-              paginate(-1);
-            }
-          }}
           className="absolute inset-0 w-full h-full"
         >
           <div className="relative w-full h-full flex flex-col md:flex-row">
             <div className="w-full md:w-1/2 h-1/2 md:h-full relative">
               <div className="relative w-full h-full">
-                <motion.div
-                  initial={{ scale: 1.1 }}
-                  animate={{ scale: 1 }}
-                  transition={{ duration: 0.5 }}
-                  className="w-full h-full"
-                >
-                  <Image
-                    src={currentProduct.image}
-                    alt={currentProduct.name}
-                    fill
-                    className="object-cover"
-                    priority
-                  />
-                </motion.div>
+                <Image
+                  src={currentProduct.image}
+                  alt={currentProduct.name}
+                  fill
+                  className="object-cover"
+                  priority
+                />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             </div>
-            
+
             <div className="w-full md:w-1/2 h-1/2 md:h-full bg-white p-4 sm:p-6 md:p-8 flex flex-col justify-center">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-sm tracking-widest text-gray-500 mb-1 sm:mb-2"
-              >
+              <div className="text-sm tracking-widest text-gray-500 mb-1 sm:mb-2">
                 {currentProduct.category}
-              </motion.div>
-              
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium mb-2 sm:mb-4"
-              >
+              </div>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium mb-2 sm:mb-4">
                 {currentProduct.name}
-              </motion.h2>
-              
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="text-gray-600 mb-3 sm:mb-6 text-sm sm:text-base"
-              >
+              </h2>
+              <p className="text-gray-600 mb-3 sm:mb-6 text-sm sm:text-base">
                 {currentProduct.description}
-              </motion.p>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="text-xl sm:text-2xl font-medium mb-4 sm:mb-8"
-              >
+              </p>
+              <div className="text-xl sm:text-2xl font-medium mb-4 sm:mb-8">
                 {currentProduct.price}
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="flex gap-3 sm:gap-4"
-              >
+              </div>
+              <div className="flex gap-3 sm:gap-4">
                 <button className="bg-black text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-gray-800 transition-colors text-sm sm:text-base">
                   Add to Cart
                 </button>
-                <button 
+                <button
                   onClick={openModal}
                   className="border border-black px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-gray-100 transition-colors flex items-center justify-center text-sm sm:text-base"
                 >
                   View Details
                 </button>
-              </motion.div>
+              </div>
             </div>
           </div>
         </motion.div>
       </AnimatePresence>
-      
+
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
         {products.map((_, i) => (
           <button
             key={i}
             onClick={() => setCurrentIndex([i, i > currentIndex ? 1 : -1])}
-            className={`w-2 h-2 rounded-full transition-colors ${
-              i === currentIndex ? "bg-black" : "bg-gray-300"
-            }`}
+            className={`w-2 h-2 rounded-full transition-colors ${i === currentIndex ? "bg-black" : "bg-gray-300"
+              }`}
             aria-label={`Go to slide ${i + 1}`}
           />
         ))}
       </div>
-      
+
       <button
         className="absolute top-1/2 left-2 sm:left-4 transform -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center z-10 hover:bg-white transition-colors"
         onClick={() => !dragging && paginate(-1)}
@@ -309,7 +241,7 @@ export function ProductShowcase() {
       >
         <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
       </button>
-      
+
       <button
         className="absolute top-1/2 right-2 sm:right-4 transform -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center z-10 hover:bg-white transition-colors"
         onClick={() => !dragging && paginate(1)}
@@ -319,10 +251,10 @@ export function ProductShowcase() {
       </button>
 
       {/* Product Modal */}
-      <ProductModal 
-        isOpen={modalOpen} 
-        onClose={closeModal} 
-        product={currentProduct} 
+      <ProductModal
+        isOpen={modalOpen}
+        onClose={closeModal}
+        product={currentProduct}
       />
     </div>
   );
