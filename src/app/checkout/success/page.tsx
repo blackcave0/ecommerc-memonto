@@ -1,111 +1,99 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function SuccessPage() {
-  const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(true); // New state for loading spinner
   const searchParams = useSearchParams();
+  const { clearCart, cart } = useCart();
+  const { user } = useAuth();
+  const hasExecuted = useRef(false); // Track if the function has already executed
 
   useEffect(() => {
-    const sessionId = searchParams.get('session_id');
+    const verifyAndSaveOrder = async () => {
+      if (!user || hasExecuted.current) return; // Ensure user is loaded and function is not executed multiple times
 
-    if (!sessionId) {
-      console.warn('No session_id found in the URL');
-      setIsPaymentSuccessful(false);
-      setIsVerifying(false); // Stop spinner if no session_id
-      return;
-    }
+      const sessionId = searchParams.get('session_id');
+      if (!sessionId) {
+        console.error('No session_id found in query parameters.');
+        return;
+      }
 
-    const verifyPayment = async () => {
+      hasExecuted.current = true; // Mark as executed to prevent re-triggering
+
       try {
-        console.log('Verifying session ID with backend:', sessionId);
+        // Verify payment
+        const verifyResponse = await fetch(`/api/verify-payment?session_id=${sessionId}`);
+        const verifyData = await verifyResponse.json();
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        if (!verifyResponse.ok || verifyData.payment_status !== 'paid') {
+          console.error('Payment verification failed:', verifyData);
+          return;
+        }
 
-        const response = await fetch(`/api/verify-payment?session_id=${sessionId}`, {
-          signal: controller.signal,
+        // Save order
+        const saveOrderResponse = await fetch('/api/save-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            stripeSessionId: sessionId,
+            userId: user.id,
+            order: {
+              id: verifyData.order_id,
+              total_amount: parseFloat(cart.totalPrice.replace(/[^0-9.-]+/g, '')), // Ensure total_amount is a valid number
+              shipping_address: {
+                street: user.address || 'Unknown Street',
+                city: 'Unknown City',
+                state: 'Unknown State',
+                country: 'Unknown Country',
+                postal_code: user.pincode || '00000',
+              },
+              shipping_pincode: user.pincode || '00000',
+              payment_method: 'Credit Card',
+            },
+            items: cart.items.map((item) => ({
+              product_id: item.productId,
+              product_name: item.name,
+              product_image: item.image,
+              quantity: item.quantity,
+              price: parseFloat(item.price.replace(/[^0-9.-]+/g, '')), // Ensure price is a valid number
+            })),
+          }),
         });
-        clearTimeout(timeoutId);
 
-        if (!response.ok) {
-          console.error('API request failed with status:', response.status);
-          throw new Error(`HTTP error! status: ${response.status}`);
+        const saveOrderData = await saveOrderResponse.json();
+
+        if (!saveOrderResponse.ok || !saveOrderData.success) {
+          console.error('Failed to save order:', saveOrderData.error);
+          return;
         }
 
-        const data = await response.json();
-        console.log('Backend response data:', data);
+        // Clear cart after successful order save
+        clearCart();
 
-        if (data.payment_status === 'paid') {
-          console.log('Payment verified successfully.');
-          setIsPaymentSuccessful(true);
-        } else {
-          console.error('Payment verification failed. Status:', data.payment_status, 'Data:', data);
-          setIsPaymentSuccessful(false);
-        }
+        console.log('Order saved successfully:', saveOrderData);
       } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
-          console.error('Payment verification request timed out');
-        } else {
-          console.error('Error verifying payment:', error);
-        }
-        setIsPaymentSuccessful(false);
-      } finally {
-        setIsVerifying(false); // Stop spinner after verification
+        console.error('Error during payment verification or order saving:', error);
       }
     };
 
-    verifyPayment();
-  }, [searchParams]);
+    verifyAndSaveOrder();
+  }, [searchParams, cart, user, clearCart]);
 
-  if (isVerifying) {
-    // Custom loading spinner
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 border-4 border-gray-300 border-t-black rounded-full animate-spin"></div>
-          <p className="mt-4 text-gray-600">Verifying payment...</p>
-        </div>
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold">Payment Successful!</h1>
+        <p className="mt-4 text-gray-600">Your order has been placed successfully.</p>
+        <button
+          onClick={() => window.location.href = '/'}
+          className="mt-6 bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors"
+        >
+          Continue Shopping
+        </button>
       </div>
-    );
-  }
-
-  if (!isPaymentSuccessful) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h1 className="text-2xl font-medium text-red-600 mb-4">Payment Verification Failed</h1>
-          <p className="text-gray-600 mb-6">
-            We couldn't verify your payment. Please check your email or contact support if you believe this is an error.
-          </p>
-          <Link
-            href="/shop"
-            className="inline-block bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors"
-          >
-            Return to Shop
-          </Link>
-        </div>
-      </div>
-    );
-  } else if (isPaymentSuccessful) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
-        <div className="max-w-md w-full bg-white shadow-md rounded-lg p-6 text-center">
-          <h1 className="text-2xl font-medium text-green-600 mb-4">Payment Successful!</h1>
-          <p className="text-gray-600 mb-6">
-            Thank you for your purchase. Your order has been successfully processed. A confirmation email is on its way.
-          </p>
-          <Link
-            href="/shop"
-            className="inline-block bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors"
-          >
-            Continue Shopping
-          </Link>
-        </div>
-      </div>
-    );
-  }
+    </div>
+  );
 }

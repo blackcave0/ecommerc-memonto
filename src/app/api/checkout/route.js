@@ -64,21 +64,31 @@ export async function POST(req) {
       };
     });
 
+    // Fallback for NEXT_PUBLIC_BASE_URL
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin")}/checkout?canceled=true`,
+      success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/checkout/cancel`,
     });
 
-    return new Response(JSON.stringify({ url: session.url }), { status: 200 });
+    return new Response(
+      JSON.stringify({ url: session.url, sessionId: session.id }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   } catch (error) {
     console.error("Error creating Stripe Checkout session:", error); // Log the error
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred";
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
+      headers: { "Content-Type": "application/json" },
     });
   }
 }

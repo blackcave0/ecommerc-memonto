@@ -2,14 +2,17 @@
 
 import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext'; // Import useAuth to access user
 import { Header } from '@/components/home/Header';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Minus, Plus, X } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid'; // Import UUID generator
 
 export default function CheckoutPage() {
-  const { cart, removeFromCart, updateQuantity } = useCart();
+  const { cart, removeFromCart, updateQuantity } = useCart(); // Include removeFromCart and updateQuantity
+  const { user } = useAuth(); // Access user from the authentication context
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleCheckout = async () => {
@@ -22,17 +25,60 @@ export default function CheckoutPage() {
       });
 
       const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url; // Redirect to Stripe Checkout
-        // return;
-      } else {
-        alert('Failed to initiate checkout.');
+      if (!data.url) {
+        alert('Failed to initiate checkout. Please try again.');
+        return;
       }
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
     } catch (error) {
       console.error('Error during checkout:', error);
       alert('An error occurred. Please try again.');
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  // Add a new function to handle saving the order after payment success
+  const handlePaymentSuccess = async (sessionId: string) => {
+    try {
+      const saveOrderResponse = await fetch('/api/save-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stripeSessionId: sessionId,
+          userId: user.id,
+          order: {
+            id: uuidv4(),
+            total_amount: cart.totalPrice,
+            shipping_address: {
+              street: user.address || 'Unknown Street',
+              city: 'Unknown City',
+              state: 'Unknown State',
+              country: 'Unknown Country',
+              postal_code: user.pincode || '00000',
+            },
+            shipping_pincode: user.pincode || '00000',
+            payment_method: 'Credit Card',
+          },
+          items: cart.items.map((item) => ({
+            product_id: item.productId,
+            product_name: item.name,
+            product_image: item.image,
+            quantity: item.quantity,
+            price: parseFloat(item.price.replace('$', '')),
+          })),
+        }),
+      });
+
+      const saveOrderResult = await saveOrderResponse.json();
+      if (!saveOrderResponse.ok || !saveOrderResult.success) {
+        console.error('Failed to save order:', saveOrderResult.error);
+        alert('Failed to save order. Please contact support.');
+      }
+    } catch (error) {
+      console.error('Error saving order:', error);
     }
   };
 
