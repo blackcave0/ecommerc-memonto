@@ -54,7 +54,7 @@ export function Header() {
 
         <div className="hidden sm:flex items-center gap-3 sm:gap-4">
           <div className="flex gap-3 sm:gap-4">
-            <Instagram onClick={()=> open("https://www.instagram.com/")} className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer hover:text-gray-600 transition-colors" />
+            <Instagram onClick={() => open("https://www.instagram.com/")} className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer hover:text-gray-600 transition-colors" />
             <Twitter className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer hover:text-gray-600 transition-colors" />
             <Youtube className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer hover:text-gray-600 transition-colors" />
           </div>
@@ -98,14 +98,17 @@ export function Header() {
 
         {/* Mobile menu button */}
         <button
-          className="sm:hidden absolute right-2 top-1/2 transform -translate-y-1/2"
-          onClick={toggleMobileMenu}
+          className="sm:hidden absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-2"
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent navigation menu toggle
+          }}
           aria-label="Toggle mobile menu"
         >
+          <CartIcon className="w-6 h-6" />
           {mobileMenuOpen ? (
-            <X className="w-6 h-6" />
+            <X className="w-6 h-6" onClick={toggleMobileMenu} />
           ) : (
-            <Menu className="w-6 h-6" />
+            <Menu className="w-6 h-6" onClick={toggleMobileMenu} />
           )}
         </button>
 
