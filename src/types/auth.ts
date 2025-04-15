@@ -1,4 +1,13 @@
-import { User } from "@supabase/supabase-js";
+import { User as SupabaseUser } from "@supabase/supabase-js"; // Rename imported User to SupabaseUser
+
+export interface User {
+  id: string;
+  email: string;
+  address?: string; // Add address property
+  pincode?: string; // Add pincode property
+  email_confirmed_at?: string; // Add email_confirmed_at property
+  // ...existing properties...
+}
 
 export interface UserProfile {
   id: string;
@@ -13,7 +22,7 @@ export interface UserProfile {
 }
 
 export interface AuthState {
-  user: User | null;
+  user: User | null; // Use the locally declared User interface
   profile: UserProfile | null;
   isLoading: boolean;
   error: string | null;
